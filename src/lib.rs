@@ -1,3 +1,3 @@
-pub mod Archive;
-pub mod Mod;
-pub mod saveNews;
+pub mod archive;
+pub mod module;
+pub mod savenews;

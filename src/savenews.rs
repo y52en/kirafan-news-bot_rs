@@ -1,5 +1,5 @@
-use crate::Archive;
-use crate::Mod::*;
+use crate::archive::*;
+use crate::module::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -22,7 +22,7 @@ static sel_img_link: Lazy<scraper::Selector> = Lazy::new(|| compiled_selector(r#
 static sel_assets_link: Lazy<scraper::Selector> =
     Lazy::new(|| compiled_selector(r#"div[style*='background-image']"#));
 
-pub async fn savenews(path: &String, url: &String, folder: &String) {
+pub async fn savenews(path :&str , url:&str, folder:&str,mut process_list:Vec<tokio::task::JoinHandle<()>>) -> Vec<tokio::task::JoinHandle<()>> {
     let html = get_html_retry(path, 3).await;
     let doc = parse_html(&html);
 
@@ -33,24 +33,31 @@ pub async fn savenews(path: &String, url: &String, folder: &String) {
     let assets_link = scraping(&re_assets_link, &sel_assets_link, &doc);
 
     for js in js_link {
-        Archive::archive_file(&js, "js", &"".to_string(), &path.to_string()).await;
+        archive_file(&js, "js", "", &path).await;
     }
 
     for css in css_link {
-        Archive::archive_file(&css, "css", &"".to_string(), &path.to_string()).await;
+        archive_file(&css, "css", "", &path).await;
     }
 
     for asset in assets_link {
-        Archive::archive_file(&asset, "asset", &"".to_string(), &path.to_string()).await;
+        archive_file(&asset, "asset", "", &path).await;
     }
 
     for img in img_link {
-        Archive::archive_file(
+        let path_clone = path.clone();
+        let url_clone = url.clone();
+        let process = tokio::spawn(async move {
+        archive_file(
             &img,
             "img",
-            &format!("{}{}{}", url,"/", folder),
-            &path.to_string(),
+            &format!("{}{}{}{}", url_clone.clone(),"/", folder,"/"),
+            &path_clone.clone(),
         )
         .await;
+        });
+        process_list.push(process);
     }
+
+    return process_list;
 }

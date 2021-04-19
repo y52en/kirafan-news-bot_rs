@@ -1,4 +1,4 @@
-use crate::Mod::*;
+use crate::module::*;
 use once_cell::sync::Lazy;
 use regex::Regex;
 
@@ -9,10 +9,12 @@ static re_host: Lazy<Regex> = Lazy::new(|| compiled_regex(r"(https?://[^/]+)/"))
 #[allow(non_upper_case_globals, dead_code)]
 static re_filename: Lazy<Regex> = Lazy::new(|| compiled_regex(r"/(([^/]+$))"));
 
-static HOMEPATH: &str = "/home/y52en";
+// static HOMEPATH: &str = "/home/pi";
+static HOMEPATH: &str = "/home/y52en/kirafan-news_rs";
 
-pub async fn savefile(url: &String, path: String) {
-    if !is_pathExist(&path) {
+pub async fn savefile(url: &str, path: &str) {
+    // return;
+    if !is_path_exist(&path) {
         let mut rem_retry: i32 = 3;
         while rem_retry > 0 {
             let html_feature = urlretrieve(url, &path).await;
@@ -21,13 +23,14 @@ pub async fn savefile(url: &String, path: String) {
             }
             rem_retry -= 1;
             println!("retry {}", (3 - rem_retry));
+            wait(5000).await;
         }
         panic!("failed to save file");
     }
 }
 
-pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, baseurl: &String) {
-    let mut url: String = in_url.to_string();
+pub async fn archive_file(in_url: &str, filetype: &str, savepath: &str, baseurl: &str) {
+    let mut url = in_url.to_string();
     let no_downloadlist = [
         "https://krr-dev-web.star-api.com/wp-content/uploads/2019/09/専用武器追加_201910-1.png",
         "https://krr-dev-web.star-api.com/wp-content/uploads/2019/05/NEW-GAME_-期間限定特別_クロモン.png",
@@ -39,7 +42,7 @@ pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, ba
         return;
     };
 
-    if is_re_match(&re_is_root, &url).is_ok() {
+    if is_re_match(&re_is_root, &url) {
         let host = re_find(&re_host, &baseurl);
         url = host + &url;
     };
@@ -50,20 +53,22 @@ pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, ba
         "index.html".to_string()
     };
 
+    // println!("{}",savepath);
+
     match filetype {
         "js" => {
             savefile(
                 &url,
-                format!("{}{}{}", HOMEPATH, "/kirafan-news_rs/assets/js/", &filename),
+                &format!("{}{}{}", HOMEPATH, "/assets/js/", &filename),
             )
             .await
         }
         "css" => {
             savefile(
                 &url,
-                format!(
+                &format!(
                     "{}{}{}",
-                    HOMEPATH, "/kirafan-news_rs/assets/css/", &filename
+                    HOMEPATH, "/assets/css/", &filename
                 ),
             )
             .await
@@ -71,9 +76,9 @@ pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, ba
         "asset" => {
             savefile(
                 &url,
-                format!(
+                &format!(
                     "{}{}{}",
-                    HOMEPATH, "/kirafan-news_rs/assets/img/", &filename
+                    HOMEPATH, "/assets/img/", &filename
                 ),
             )
             .await
@@ -81,9 +86,9 @@ pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, ba
         "img" => {
             savefile(
                 &url,
-                format!(
+                &format!(
                     "{}{}{}{}{}",
-                    HOMEPATH, "/kirafan-news_rs/news/", &savepath,"/", &filename
+                    HOMEPATH, "/news/", &savepath,"/", &filename
                 ),
             )
             .await
@@ -91,9 +96,9 @@ pub async fn archive_file(in_url: &String, filetype: &str, savepath: &String, ba
         "html" => {
             savefile(
                 &url,
-                format!(
+                &format!(
                     "{}{}{}{}{}",
-                    HOMEPATH, "/kirafan-news_rs/news/", &savepath,"/" , &filename
+                    HOMEPATH, "/news/", &savepath,"/" , &filename
                 ),
             )
             .await;
