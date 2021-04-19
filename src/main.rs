@@ -99,9 +99,9 @@ async fn main() {
     ///// init /////////////////////////
     let host = "https://kirara.star-api.com/".to_string();
     // let host = "http://127.0.0.1:5500/".to_string();
-    let baseurl = format!("{}{}", &host, "/cat_news/");
-    // let category = ["information", "maintenance", "update"];
-    let category = ["information"];
+    // let baseurl = format!("{}{}", &host, "/cat_news/");
+    let category = ["information", "maintenance", "update"];
+    // let category = ["information"];
 
     let sel_pageurls = compiled_selector(".newsPost > a");
     let sel_pagetitles = compiled_selector(".newsPost > a > dl > dd");
@@ -151,8 +151,8 @@ async fn main() {
         let pagelist = scraping(&re_pagelist, &sel_pagelist, &doc);
         let last_page = pagelist.last().unwrap().parse::<i32>().unwrap();
 
-        // for page_id in 1..(last_page + 1) {
-        for page_id in 1..5 {
+        for page_id in 1..(last_page + 1) {
+        // for page_id in 1..5 {
             println!("{}", page_id);
             if page_id != 1 {
                 let html = get_html_retry(
@@ -236,7 +236,6 @@ async fn main() {
                 }
             }
 
-            //後で即awaitをやめる
             for js in js_link {
                 let host_tmp = host.clone();
                 let process = tokio::spawn(async move {
