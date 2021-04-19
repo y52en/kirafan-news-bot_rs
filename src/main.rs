@@ -2,14 +2,14 @@ use kirafan_newsbot_py_rust::archive::*;
 use kirafan_newsbot_py_rust::module::*;
 use kirafan_newsbot_py_rust::savenews;
 
-use std::sync::{Arc, Mutex, RwLock};
+// use std::sync::{Arc, Mutex, RwLock};
 
 // use regex::Regex;
 
 static HOMEPATH: &str = "/home/y52en/kirafan-news_rs";
 
-#[macro_use]
-extern crate lazy_static;
+// #[macro_use]
+// extern crate lazy_static;
 
 // #[tokio::main]
 // async fn main() {
@@ -49,23 +49,23 @@ async fn main__() {
 #[tokio::main]
 async fn main_() {
     // let process_list:Arc<Mutex<Vec<tokio::task::JoinHandle<()>>>>  = Arc::new(Mutex::new(vec![]));
-    let process_list = Arc::new(RwLock::new(vec![]));
+    // let process_list = Arc::new(RwLock::new(vec![]));
 
-    let mut process_a = tokio::spawn(async {
-        //処理
-    });
-    // let mut process_list_locked = process_list_cloned.lock().unwrap();
-    {
-        let process_list_ = Arc::clone(&process_list);
-        let process_list_2 = process_list_.write();
-        if let Ok(mut v) = process_list_2 {
-            v.push(process_a);
-        }
-    };
+    // let mut process_a = tokio::spawn(async {
+    //     //処理
+    // });
+    // // let mut process_list_locked = process_list_cloned.lock().unwrap();
+    // {
+    //     let process_list_ = Arc::clone(&process_list);
+    //     let process_list_2 = process_list_.write();
+    //     if let Ok(mut v) = process_list_2 {
+    //         v.push(process_a);
+    //     }
+    // };
     // process_list_.push(Mutex::new(process_a));
 
     //色々処理
-    println!("1");
+    // println!("1");
 
     // let process_b = tokio::spawn(async {
     //     //処理
@@ -81,12 +81,12 @@ async fn main_() {
     // for process in process_list_locked.into_iter() {
     //     process.await.unwrap();
     // }
-    let mut q = Arc::clone(&process_list);
-    let mut process_list_2 = q.write().unwrap();
-    // if v = process_list_2 {
-    for mut v_ in process_list_2.iter() {
-        // (v_).await;
-    }
+    // let mut process_list_2 = q.write().unwrap();
+    // // if v = process_list_2 {
+    // for mut v_ in process_list_2.iter() {
+    //     // (v_).await;
+    // }mut q = Arc::clone(&process_list);
+    // let 
     // }
     //   || unsafe { async {
     //      (&(*process_list_locked.get(0).unwrap())).await
@@ -100,7 +100,8 @@ async fn main() {
     let host = "https://kirara.star-api.com/".to_string();
     // let host = "http://127.0.0.1:5500/".to_string();
     let baseurl = format!("{}{}", &host, "/cat_news/");
-    let category = ["information", "maintenance", "update"];
+    // let category = ["information", "maintenance", "update"];
+    let category = ["information"];
 
     let sel_pageurls = compiled_selector(".newsPost > a");
     let sel_pagetitles = compiled_selector(".newsPost > a > dl > dd");
@@ -142,13 +143,16 @@ async fn main() {
         });
         let page1_html = page1_html_feature.await.unwrap();
 
+        // println!("{:#?}", page1_html);
+
         let html_data = page1_html;
         let mut doc = parse_html(&html_data);
 
         let pagelist = scraping(&re_pagelist, &sel_pagelist, &doc);
         let last_page = pagelist.last().unwrap().parse::<i32>().unwrap();
 
-        for page_id in 1..(last_page + 1) {
+        // for page_id in 1..(last_page + 1) {
+        for page_id in 1..5 {
             println!("{}", page_id);
             if page_id != 1 {
                 let html = get_html_retry(
@@ -278,28 +282,11 @@ async fn main() {
                     HOMEPATH, "/news/", &url, "/", &folder, "/"
                 ))
                 .await;
-                // println!("{}",format!(
-                //     "{}{}{}{}{}{}",
-                //     rootpath,
-                //     "/news/",
-                //     url,
-                //     "/",
-                //     &folder
-                //     ,"/"
-                // ));
-                // let link_tmp = &pageurls_clone.get(i).unwrap();
-                // let folder_tmp = &folder.clone();
-                //      lazy_static! {
-                //     //   ||   {
-                //         pub static ref link_static :&'static str = &link_tmp;
-                //         pub static ref folder_static :&'static str = &folder_tmp;
-
-                //     // }
-                // };
-                let url_tmp = url.clone();
-                let link_static :&'static str =  &link;
-                let folder_static :&'static str = &folder;
-                process_list = savenews::savenews(&link_static, &url_tmp, &folder_static,process_list).await;
+                let url_tmp = url.to_string();
+                let link_static = link.to_string();
+                let folder_static = folder.to_string();
+                process_list =
+                    savenews::savenews(link_static, url_tmp, folder_static, process_list).await;
 
                 let host_tmp = host.clone();
                 let link_tmp = link.clone();
@@ -327,12 +314,9 @@ async fn main() {
     // let page1_html_feature = tokio::spawn(async move {
     // let process_list_locked = process_list_shared.lock().unwrap();
 
-    //         for process in process_list_locked.into_iter() {
-    //             //    let r = *process;
-    //             //    r.await;
-    //             process.await;
-    //         }
-    // });
+    for process in process_list.into_iter() {
+        process.await.unwrap();
+    }
     // page1_html_feature.await.unwrap();
 
     println!("fin");

@@ -25,7 +25,7 @@ pub async fn savefile(url: &str, path: &str) {
             println!("retry {}", (3 - rem_retry));
             wait(5000).await;
         }
-        panic!("failed to save file");
+        panic!("failed to save file:{}",url);
     }
 }
 

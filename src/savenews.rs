@@ -22,39 +22,57 @@ static sel_img_link: Lazy<scraper::Selector> = Lazy::new(|| compiled_selector(r#
 static sel_assets_link: Lazy<scraper::Selector> =
     Lazy::new(|| compiled_selector(r#"div[style*='background-image']"#));
 
-pub async fn savenews(path :&str , url:&str, folder:&str,mut process_list:Vec<tokio::task::JoinHandle<()>>) -> Vec<tokio::task::JoinHandle<()>> {
-    let html = get_html_retry(path, 3).await;
+pub async fn savenews(
+    path: String,
+    url: String,
+    folder: String,
+    mut process_list: Vec<tokio::task::JoinHandle<()>>,
+) -> Vec<tokio::task::JoinHandle<()>> {
+    let html = get_html_retry(&path, 5).await;
     let doc = parse_html(&html);
 
-    let js_link = scraping(&re_js_css_link, &sel_js_link, &doc);
+    let js_link = scraping(&re_img_link, &sel_js_link, &doc);
     let css_link = scraping(&re_css_link, &sel_css_link, &doc);
 
     let img_link = scraping(&re_img_link, &sel_img_link, &doc);
     let assets_link = scraping(&re_assets_link, &sel_assets_link, &doc);
 
     for js in js_link {
-        archive_file(&js, "js", "", &path).await;
+        let path_clone = path.clone();
+        let process = tokio::spawn(async move {
+            archive_file(&js, "js", "", &path_clone).await;
+        });
+        process_list.push(process);
     }
 
     for css in css_link {
-        archive_file(&css, "css", "", &path).await;
+        let path_clone = path.clone();
+        let process = tokio::spawn(async move {
+            archive_file(&css, "css", "", &path_clone).await;
+        });
+        process_list.push(process);
     }
 
     for asset in assets_link {
-        archive_file(&asset, "asset", "", &path).await;
+        let path_clone = path.clone();
+        let process = tokio::spawn(async move {
+            archive_file(&asset, "asset", "", &path_clone).await;
+        });
+        process_list.push(process);
     }
 
     for img in img_link {
         let path_clone = path.clone();
         let url_clone = url.clone();
+        let folder_clone = folder.clone();
         let process = tokio::spawn(async move {
-        archive_file(
-            &img,
-            "img",
-            &format!("{}{}{}{}", url_clone.clone(),"/", folder,"/"),
-            &path_clone.clone(),
-        )
-        .await;
+            archive_file(
+                &img,
+                "img",
+                &format!("{}{}{}{}", url_clone.clone(), "/", folder_clone, "/"),
+                &path_clone.clone(),
+            )
+            .await;
         });
         process_list.push(process);
     }
