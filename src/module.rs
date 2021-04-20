@@ -1,22 +1,13 @@
 use std::fs;
 use std::fs::File;
-// use std::io;
 use std::io::Write;
-
-// use std::io::Write;
 use std::path::Path;
 
+use once_cell::sync::Lazy;
 use regex::Regex;
 use reqwest::Error;
-
 use tokio::time::*;
-use once_cell::sync::Lazy;
-
-// use std::fs::File;
-
-    use twitter_text::parse;
-
-
+use twitter_text::parse;
 
 #[allow(non_upper_case_globals, dead_code)]
 static re_rem_lastline: Lazy<Regex> = Lazy::new(|| compiled_regex(r"\n$"));
@@ -26,7 +17,10 @@ static re_rem_firstline: Lazy<Regex> = Lazy::new(|| compiled_regex(r"^\n"));
 
 pub async fn urlretrieve(url: &str, path_s: &str) -> Result<(), Error> {
     let path = Path::new(&path_s);
-    let mut out = tokio::fs::File::create(path).await.expect("failed to create file");
+    println!("{}",path_s);
+    let mut out = tokio::fs::File::create(path)
+        .await
+        .expect("failed to create file");
     let resp = reqwest::get(url).await;
     if !resp.is_ok() {
         tokio::fs::remove_file(path).await.unwrap();
@@ -34,9 +28,30 @@ pub async fn urlretrieve(url: &str, path_s: &str) -> Result<(), Error> {
     };
     let bytes = resp.unwrap().bytes().await.unwrap();
     println!("{:#?}", url);
-    tokio::io::copy(&mut bytes.as_ref(), &mut out).await.expect("failed to copy content");
+    
+    tokio::io::copy(&mut bytes.as_ref(), &mut out)
+        .await
+        .expect("failed to copy content");
     return Ok(());
 }
+
+// pub async fn urlretrieve(url: &str, path_s: &str) -> Result<(), Error> {
+//     // let path = Path::new(&path_s);
+//     let resp = reqwest::get(url).await;
+//     if !resp.is_ok() {
+//         tokio::fs::remove_file(path).await.unwrap();
+//         return Err(resp.unwrap_err());
+//     };
+//     let bytes = resp.unwrap().bytes().await.unwrap();
+//     println!("{:#?}", url);
+//     let mut out = tokio::fs::File::create(path)
+//         .await
+//         .expect("failed to create file");
+//     tokio::io::copy(&mut bytes.as_ref(), &mut out)
+//         .await
+//         .expect("failed to copy content");
+//     return Ok(());
+// }
 
 pub async fn get_html(url: &str) -> Result<String, Error> {
     let req = reqwest::get(url).await;
@@ -77,22 +92,18 @@ pub fn re_find(regex: &Regex, text: &str) -> String {
 pub fn is_re_match(regex: &Regex, text: &str) -> bool {
     let result = regex.captures(text);
     match result {
-        Some(_) => {
-            let result2 = result.unwrap().get(1);
-            match result2 {
-                Some(_) => true,
-                None => false,
-            }
-        }
+        Some(_) => true,
         None => false,
     }
 }
 
 // https://doc.rust-jp.rs/rust-by-example-ja/std_misc/fs.html
 pub async fn mkdirs(path: &str) {
-    tokio::fs::create_dir_all(&path).await.unwrap_or_else(|why| {
-        println!("! {:?}", why.kind());
-    });
+    tokio::fs::create_dir_all(&path)
+        .await
+        .unwrap_or_else(|why| {
+            println!("! {:?}", why.kind());
+        });
 }
 
 pub fn compiled_selector(selector: &str) -> scraper::Selector {
@@ -108,18 +119,15 @@ pub fn readfile_asline(path: &String) -> Result<Vec<String>, Box<dyn std::error:
         fs::File::create(path).unwrap();
     }
     let content = fs::read_to_string(path)?;
-    let rm_lastline = re_rem_lastline.replace(&content,"");
+    let rm_lastline = re_rem_lastline.replace(&content, "");
     let splited = split_by_line(&rm_lastline);
-    // println!("{}", content);
     Ok(splited)
-    // let c = rm_lastline.split("\n").collect();
-    // Ok(c)
 }
 
-pub fn writefile_asline(path: &String,vec:Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn writefile_asline(path: &String, vec: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
     let mut write_to = vec.join("\n");
     write_to += "\n";
-    write_to = re_rem_firstline.replace(&write_to,"").to_string();
+    write_to = re_rem_firstline.replace(&write_to, "").to_string();
 
     let mut file = File::create(path)?;
     write!(file, "{}", write_to)?;
@@ -132,7 +140,9 @@ pub fn is_path_exist(path: &str) -> bool {
 }
 
 pub fn split_by_line(text: &str) -> Vec<String> {
-    text.split("\n").map(|x| x.to_string()).collect::<Vec<String>>()
+    text.split("\n")
+        .map(|x| x.to_string())
+        .collect::<Vec<String>>()
 }
 
 pub fn is_array_contein(in_vec: [&str; 4], text: &str) -> bool {
@@ -149,14 +159,13 @@ pub fn parse_html(html: &str) -> scraper::Html {
 
 pub fn scraping(regex: &Regex, selector: &scraper::Selector, html: &scraper::Html) -> Vec<String> {
     let mut x = vec![];
-
     for elm in html.select(&selector) {
         x.push(re_find(regex, &elm.html()))
     }
     return x;
 }
 
-pub fn count_twitter_str(tweet:&str) -> i32 {
+pub fn count_twitter_str(tweet: &str) -> i32 {
     let config = twitter_text_config::default();
-    return parse(&tweet, config ,true).weighted_length;
+    return parse(&tweet, config, true).weighted_length;
 }
